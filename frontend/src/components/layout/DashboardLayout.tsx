@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { 
   LayoutDashboard, ShieldAlert, Binary, Bot, 
   Settings, ClipboardList, LogOut, ShieldAlert as ShieldIcon,
-  Activity, Clock
+  Activity, Clock, FileText
 } from 'lucide-react';
 
 interface SidebarItemProps {
@@ -116,6 +116,12 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
               label="AI assistant" 
               active={location.pathname === '/section3'} 
             />
+            <SidebarItem 
+              to="/firs" 
+              icon={<FileText className="w-4 h-4 text-cyan-400" />} 
+              label="FIR Section" 
+              active={location.pathname === '/firs'} 
+            />
             
             <div className="px-3 py-2 pt-6">
               <span className="text-[10px] text-gray-500 font-mono tracking-widest uppercase">AUDITING & SETS</span>
@@ -162,6 +168,10 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
           <Link to="/section3" className={`flex flex-col items-center text-xs ${location.pathname === '/section3' ? 'text-cyan-400' : 'text-gray-400'}`}>
             <Bot className="w-5 h-5 text-purple-400" />
             <span className="text-[9px] mt-0.5">AI</span>
+          </Link>
+          <Link to="/firs" className={`flex flex-col items-center text-xs ${location.pathname === '/firs' ? 'text-cyan-400' : 'text-gray-400'}`}>
+            <FileText className="w-5 h-5 text-cyan-400" />
+            <span className="text-[9px] mt-0.5">FIR</span>
           </Link>
           <button onClick={handleLogout} className="flex flex-col items-center text-rose-400">
             <LogOut className="w-5 h-5" />

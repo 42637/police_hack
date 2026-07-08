@@ -13,6 +13,7 @@ import { Section2 } from './pages/Section2';
 import { Section3 } from './pages/Section3';
 import { History } from './pages/History';
 import { Settings } from './pages/Settings';
+import { Firs } from './pages/Firs';
 
 // Protected Route Wrapper for security
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -81,6 +82,12 @@ export const App: React.FC = () => {
           <Route path="/settings" element={
             <ProtectedRoute>
               <Settings />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/firs" element={
+            <ProtectedRoute>
+              <Firs />
             </ProtectedRoute>
           } />
           
