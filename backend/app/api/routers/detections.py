@@ -47,10 +47,10 @@ async def upload_and_detect_clone(
     
     # Validate file extension
     ext = os.path.splitext(image.filename)[1].lower()
-    if ext not in [".jpg", ".jpeg", ".png"]:
+    if ext not in [".jpg", ".jpeg", ".png", ".webp"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Forbidden file type. Only JPG, JPEG, and PNG images are allowed."
+            detail="Forbidden file type. Only JPG, JPEG, PNG, and WEBP images are allowed."
         )
 
     # 1. Save Image File directly to uploads folder
