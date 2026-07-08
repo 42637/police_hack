@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
 import { 
   ShieldAlert, Play, AlertTriangle, Eye, 
-  MapPin, CheckCircle, Clock, TrendingUp, AlertCircle
+  MapPin, CheckCircle, Clock, TrendingUp, AlertCircle, FileText, Download
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -12,26 +12,52 @@ import toast from 'react-hot-toast';
 
 export const Dashboard: React.FC = () => {
   const [data, setData] = useState<any>(null);
+  const [firs, setFirs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchStatsAndFirs = async () => {
+    try {
+      const [statsResponse, firsResponse] = await Promise.all([
+        apiClient.get('/dashboard/stats'),
+        apiClient.get('/firs')
+      ]);
+      setData(statsResponse.data);
+      setFirs(firsResponse.data);
+    } catch (err: any) {
+      toast.error('Failed to update control room statistics.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await apiClient.get('/dashboard/stats');
-        setData(response.data);
-      } catch (err: any) {
-        toast.error('Failed to update control room statistics.');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchStats();
+    fetchStatsAndFirs();
     // Poll stats every 30 seconds for live cybersecurity dashboard feel
-    const interval = setInterval(fetchStats, 30000);
+    const interval = setInterval(fetchStatsAndFirs, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleDownloadPDF = async (firId: string, firNum: string) => {
+    try {
+      const response = await apiClient.get(`/firs/${firId}/pdf`, {
+        responseType: 'blob'
+      });
+      // Create local URL for file download
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `FIR_${firNum}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      toast.success(`Downloaded FIR PDF: ${firNum}`);
+    } catch (err) {
+      toast.error('Failed to download FIR PDF.');
+      console.error(err);
+    }
+  };
 
   if (loading || !data) {
     return (
@@ -276,6 +302,82 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
+      </div>
+
+      {/* FIR Section */}
+      <div className="glass-panel p-5 border border-cyan-500/5 flex flex-col justify-between">
+        <div className="flex justify-between items-center mb-4 border-b border-gray-900 pb-3">
+          <div>
+            <h3 className="text-xs font-bold tracking-widest text-cyan-400 uppercase font-mono">OFFICIAL REGISTERED FIRST INFORMATION REPORTS (FIR)</h3>
+            <p className="text-[9px] text-gray-500 font-mono uppercase mt-0.5">AUTO-FILED IDENTITY CLONING ANOMALIES // LAW ENFORCEMENT RECORDS</p>
+          </div>
+          <span className="text-[9px] font-mono text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-950 uppercase">
+            {firs.length} FIRS REGISTERED
+          </span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left font-mono text-xs">
+            <thead>
+              <tr className="border-b border-gray-800 text-gray-500">
+                <th className="py-2.5 uppercase tracking-wider">FIR NUMBER</th>
+                <th className="py-2.5 uppercase tracking-wider">CLONED VEHICLE</th>
+                <th className="py-2.5 uppercase tracking-wider">REGISTERED OWNER</th>
+                <th className="py-2.5 uppercase tracking-wider">OFFENSE LOCATION</th>
+                <th className="py-2.5 uppercase tracking-wider">REPORTED DATE</th>
+                <th className="py-2.5 uppercase tracking-wider">RISK THREAT</th>
+                <th className="py-2.5 uppercase tracking-wider text-right">ACTION</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-900/50">
+              {firs.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-gray-500 uppercase tracking-widest text-[10px]">
+                    No official FIR reports registered yet
+                  </td>
+                </tr>
+              ) : (
+                firs.map((fir: any) => (
+                  <tr key={fir._id} className="hover:bg-gray-900/20 transition-colors duration-200">
+                    <td className="py-3 text-cyan-300 font-bold flex items-center space-x-1.5">
+                      <FileText className="w-3.5 h-3.5 text-cyan-500" />
+                      <span>{fir.fir_number}</span>
+                    </td>
+                    <td className="py-3 text-white font-mono">
+                      <span className="font-bold text-cyan-400 mr-2">{fir.registration_number}</span>
+                      <span className="text-[10px] text-gray-500 uppercase">({fir.vehicle_color} {fir.vehicle_brand} {fir.vehicle_model})</span>
+                    </td>
+                    <td className="py-3 text-gray-300">{fir.owner_name}</td>
+                    <td className="py-3 text-gray-300 flex items-center space-x-1">
+                      <MapPin className="w-3.5 h-3.5 text-gray-500" />
+                      <span>{fir.location}</span>
+                    </td>
+                    <td className="py-3 text-gray-500">{new Date(fir.reported_date).toLocaleString()}</td>
+                    <td className="py-3">
+                      <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
+                        fir.risk_level === 'Critical' ? 'bg-red-500/10 text-red-500 border border-red-950 shadow-glow-red' :
+                        fir.risk_level === 'High' ? 'bg-orange-500/10 text-orange-400 border border-orange-950' :
+                        fir.risk_level === 'Medium' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-950' :
+                        'bg-emerald-500/10 text-emerald-400 border border-emerald-950'
+                      }`}>
+                        {fir.risk_level}
+                      </span>
+                    </td>
+                    <td className="py-3 text-right">
+                      <button
+                        onClick={() => handleDownloadPDF(fir._id, fir.fir_number)}
+                        className="bg-cyan-500 hover:bg-cyan-400 text-gray-950 px-2.5 py-1 rounded text-[10px] font-bold tracking-wider uppercase transition-all duration-300 inline-flex items-center space-x-1 shadow-glow-cyan/20"
+                      >
+                        <Download className="w-3 h-3" />
+                        <span>PDF</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
     </div>

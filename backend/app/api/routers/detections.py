@@ -188,6 +188,38 @@ async def upload_and_detect_clone(
                 clone_doc["_id"] = str(clone_insert_res.inserted_id)
                 clone_alerts.append(clone_doc)
 
+                # Automatically register corresponding FIR
+                try:
+                    reg = await db.registered_vehicles.find_one({"registration_number": ocr_plate})
+                    owner_name = reg["owner_name"] if reg else "Unknown / Unregistered Owner"
+                    vehicle_brand = reg["vehicle_brand"] if reg else "N/A"
+                    vehicle_model = reg["vehicle_model"] if reg else "N/A"
+                    vehicle_color = reg["vehicle_color"] if reg else "N/A"
+                    
+                    fir_count = await db.firs.count_documents({})
+                    fir_number = f"FIR-2026-{1001 + fir_count}"
+                    
+                    fir_doc = {
+                        "fir_number": fir_number,
+                        "clone_id": str(clone_insert_res.inserted_id),
+                        "detection_id": detection_id,
+                        "registration_number": ocr_plate,
+                        "vehicle_brand": vehicle_brand,
+                        "vehicle_model": vehicle_model,
+                        "vehicle_color": vehicle_color,
+                        "owner_name": owner_name,
+                        "offense": "Vehicle Identity Forgery, Plate Alteration, and Cloning Anomaly",
+                        "sections": "Section 482 (Use of False Property Mark) & Section 468 (Forgery for Purpose of Cheating) IPC",
+                        "location": location,
+                        "reported_date": datetime.utcnow(),
+                        "risk_score": risk_score,
+                        "risk_level": risk_level,
+                        "status": "REGISTERED"
+                    }
+                    await db.firs.insert_one(fir_doc)
+                except Exception as e:
+                    logger.error("Failed to automatically register FIR: {}", e)
+
             # Update overall detection stats
             if risk_score > max_risk_score:
                 max_risk_score = risk_score

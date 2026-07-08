@@ -106,6 +106,7 @@ async def seed_database():
     await db.detections.delete_many({})
     await db.detected_vehicles.delete_many({})
     await db.cloned_vehicles.delete_many({})
+    await db.firs.delete_many({})
     await db.chat_history.delete_many({})
     await db.audit_logs.delete_many({})
 
@@ -143,29 +144,123 @@ async def seed_database():
         "risk_score": 10.0
     }
     await db.detected_vehicles.insert_one(historic_veh)
+
+    # Seed a clone alert and an FIR
+    guntur_time = datetime.utcnow() - timedelta(minutes=5)
+    guntur_det_id = "60c72b2f9b1d8b2d99999999"
+    guntur_det = {
+        "_id": guntur_det_id,
+        "video_name": "guntur_cctv_02.mp4",
+        "video_path": "uploads/guntur_cctv_02.mp4",
+        "frame_path": "uploads/guntur_cctv_02.jpg",
+        "location": "Guntur National Highway",
+        "uploaded_by": "system",
+        "status": "Completed",
+        "risk_score": 85.0,
+        "max_risk_level": "High",
+        "upload_time": guntur_time
+    }
+    await db.detections.insert_one(guntur_det)
+
+    guntur_veh_id = "60c72b2f9b1d8b2d77777777"
+    guntur_veh = {
+        "_id": guntur_veh_id,
+        "detection_id": guntur_det_id,
+        "crop_path": "uploads/guntur_cctv_02_crop1.jpg",
+        "number_plate": "TS09EX5678",
+        "plate_confidence": 0.95,
+        "ocr_text": "TS09EX5678",
+        "color": "Blue",
+        "brand": "Hyundai",
+        "model": "i20",
+        "box": [120, 160, 420, 360],
+        "match_score": 0.3,
+        "is_flagged_clone": True,
+        "risk_level": "High",
+        "risk_score": 85.0
+    }
+    await db.detected_vehicles.insert_one(guntur_veh)
+
+    clone_id = "60c72b2f9b1d8b2d55555555"
+    mismatch_details = {
+        "brand": {"registered": "Toyota", "detected": "Hyundai", "mismatch": True},
+        "model": {"registered": "Fortuner", "detected": "i20", "mismatch": True},
+        "color": {"registered": "White", "detected": "Blue", "mismatch": True},
+        "registry_status": {"status": "Wanted", "message": "Vehicle registered status is flagged as Wanted."}
+    }
+    guntur_clone = {
+        "_id": clone_id,
+        "detection_id": guntur_det_id,
+        "detected_vehicle_id": guntur_veh_id,
+        "registered_vehicle_id": None,
+        "number_plate": "TS09EX5678",
+        "mismatch_details": mismatch_details,
+        "risk_score": 85.0,
+        "risk_level": "High",
+        "verified_status": "Unverified",
+        "officer_notes": "",
+        "created_at": guntur_time
+    }
+    await db.cloned_vehicles.insert_one(guntur_clone)
+
+    guntur_fir = {
+        "fir_number": "FIR-2026-1001",
+        "clone_id": clone_id,
+        "detection_id": guntur_det_id,
+        "registration_number": "TS09EX5678",
+        "vehicle_brand": "Toyota",
+        "vehicle_model": "Fortuner",
+        "vehicle_color": "White",
+        "owner_name": "M. Suresh Reddy",
+        "offense": "Vehicle Identity Forgery, Plate Alteration, and Cloning Anomaly",
+        "sections": "Section 482 (Use of False Property Mark) & Section 468 (Forgery for Purpose of Cheating) IPC",
+        "location": "Guntur National Highway",
+        "reported_date": guntur_time,
+        "risk_score": 85.0,
+        "risk_level": "High",
+        "status": "REGISTERED"
+    }
+    await db.firs.insert_one(guntur_fir)
     
     # 4. Generate dummy media files physically to prevent 404 errors in the UI
     logger.info("Creating dummy files on disk...")
     upload_dir = settings.upload_path
     os.makedirs(upload_dir, exist_ok=True)
     
-    # Create black image with overlay text representing surveillance
+    # Create black image with overlay text representing surveillance (Vijayawada)
     dummy_img = np.zeros((480, 640, 3), dtype=np.uint8)
     cv2.putText(dummy_img, "Vijayawada Checkpoint Alpha", (50, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
     cv2.imwrite(str(upload_dir / "vijayawada_cctv_01.jpg"), dummy_img)
     
-    # Create crop vehicle dummy image
+    # Create crop vehicle dummy image (Vijayawada)
     dummy_crop = np.zeros((200, 300, 3), dtype=np.uint8)
     cv2.putText(dummy_crop, "AP31CV1234", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
     cv2.imwrite(str(upload_dir / "vijayawada_cctv_01_crop1.jpg"), dummy_crop)
     
-    # Create dummy 1-second video
+    # Create dummy 1-second video (Vijayawada)
     video_path = str(upload_dir / "vijayawada_cctv_01.mp4")
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(video_path, fourcc, 10.0, (640, 480))
     for _ in range(10):
         out.write(dummy_img)
     out.release()
+
+    # Create black image with overlay text representing surveillance (Guntur)
+    dummy_img_guntur = np.zeros((480, 640, 3), dtype=np.uint8)
+    cv2.putText(dummy_img_guntur, "Guntur National Highway", (50, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+    cv2.imwrite(str(upload_dir / "guntur_cctv_02.jpg"), dummy_img_guntur)
+    
+    # Create crop vehicle dummy image (Guntur)
+    dummy_crop_guntur = np.zeros((200, 300, 3), dtype=np.uint8)
+    cv2.putText(dummy_crop_guntur, "TS09EX5678", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+    cv2.imwrite(str(upload_dir / "guntur_cctv_02_crop1.jpg"), dummy_crop_guntur)
+    
+    # Create dummy 1-second video (Guntur)
+    video_path_guntur = str(upload_dir / "guntur_cctv_02.mp4")
+    out_guntur = cv2.VideoWriter(video_path_guntur, fourcc, 10.0, (640, 480))
+    for _ in range(10):
+        out_guntur.write(dummy_img_guntur)
+    out_guntur.release()
     
     logger.info("Database seeding completed.")
     client.close()

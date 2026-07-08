@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.core.logging import logger
 from app.database.session import connect_to_mongo, close_mongo_connection
-from app.api.routers import auth, dashboard, detections, clones, chat, vehicles
+from app.api.routers import auth, dashboard, detections, clones, chat, vehicles, firs
 import os
 from datetime import datetime
 
@@ -43,6 +43,7 @@ app.include_router(detections.router, prefix="/api")
 app.include_router(clones.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
 app.include_router(vehicles.router, prefix="/api")
+app.include_router(firs.router, prefix="/api")
 
 from fastapi.responses import JSONResponse, RedirectResponse
 
