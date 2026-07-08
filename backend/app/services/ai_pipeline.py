@@ -157,6 +157,7 @@ class AIService:
                     boxes = result.boxes
                     for box in boxes:
                         class_names = {2: "car", 3: "motorcycle", 5: "bus", 7: "truck"}
+                        cls_id = int(box.cls[0])
                         if cls_id in class_names:
                             vehicle_type = class_names[cls_id]
                             x1, y1, x2, y2 = map(int, box.xyxy[0])
