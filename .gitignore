@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+backend/__pycache__/
+backend/logs/
+backend/uploads/
+uploads/
+.env
+
+# Large model files
+*.pt
+yolov8n.pt
+
+# System files
+.gemini/
+.agents/
+.vscode/
+.idea/
+*.log

@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: sentinel_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - sentinel_net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sentinel_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_URL=mongodb://mongodb:27017
+      - DATABASE_NAME=sentinel_ai
+      - JWT_SECRET=8f4a382c9b4e6d7f0a1c2e3d4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a
+      - JWT_ALGORITHM=HS256
+      - GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE # Overwrite this with your real key
+      - UPLOAD_DIR=uploads
+      - ALLOWED_HOSTS=http://localhost,http://localhost:80,http://localhost:5173
+    volumes:
+      - backend_uploads:/workspace/uploads
+    depends_on:
+      - mongodb
+    networks:
+      - sentinel_net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sentinel_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - sentinel_net
+
+volumes:
+  mongo_data:
+  backend_uploads:
+
+networks:
+  sentinel_net:
+    driver: bridge
