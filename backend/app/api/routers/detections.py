@@ -45,6 +45,14 @@ async def upload_and_detect_clone(
     logger.info("Admin {} uploaded image {} for Clone Detection at location: {}", 
                 current_user["username"], image.filename, location)
     
+    # Validate file extension
+    ext = os.path.splitext(image.filename)[1].lower()
+    if ext not in [".jpg", ".jpeg", ".png"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Forbidden file type. Only JPG, JPEG, and PNG images are allowed."
+        )
+
     # 1. Save Image File directly to uploads folder
     upload_dir = settings.upload_path
     os.makedirs(upload_dir, exist_ok=True)
@@ -109,8 +117,9 @@ async def upload_and_detect_clone(
             # Run OCR to read license plate
             ocr_plate, plate_conf = ai_service.run_ocr(crop_img, image.filename)
             
-            # Run Gemini Multi-modal validation of attributes (brand, model, color)
-            gemini_attrs = await ai_service.validate_with_gemini(rel_frame_path, ocr_plate)
+            # Run Gemini Multi-modal validation of attributes (brand, model, color, type)
+            yolo_veh_type = veh.get("vehicle_type", "car")
+            gemini_attrs = await ai_service.validate_with_gemini(rel_frame_path, ocr_plate, vehicle_type=yolo_veh_type)
             
             # Fallback/Correct plate reading using Gemini's visual intelligence if OCR is empty or failed
             if (not ocr_plate or len(ocr_plate) < 3) and gemini_attrs.get("number_plate"):
@@ -138,7 +147,8 @@ async def upload_and_detect_clone(
                     "number_plate": registered_ref.get("registration_number", "N/A"),
                     "brand": registered_ref.get("vehicle_brand", "N/A"),
                     "model": registered_ref.get("vehicle_model", "N/A"),
-                    "color": registered_ref.get("vehicle_color", "N/A")
+                    "color": registered_ref.get("vehicle_color", "N/A"),
+                    "vehicle_type": registered_ref.get("vehicle_type", "car")
                 }
 
             # Check if this is categorized as clone alert (mismatch or impossible travel)
@@ -157,6 +167,7 @@ async def upload_and_detect_clone(
                 "color": gemini_attrs["color"],
                 "brand": gemini_attrs["brand"],
                 "model": gemini_attrs["model"],
+                "vehicle_type": gemini_attrs.get("vehicle_type", "car"),
                 "box": box,
                 "match_score": match_score,
                 "is_flagged_clone": is_flagged_clone,
@@ -195,6 +206,7 @@ async def upload_and_detect_clone(
                     vehicle_brand = reg["vehicle_brand"] if reg else "N/A"
                     vehicle_model = reg["vehicle_model"] if reg else "N/A"
                     vehicle_color = reg["vehicle_color"] if reg else "N/A"
+                    vehicle_type = reg["vehicle_type"] if reg else gemini_attrs.get("vehicle_type", "car")
                     
                     fir_count = await db.firs.count_documents({})
                     fir_number = f"FIR-2026-{1001 + fir_count}"
@@ -207,6 +219,7 @@ async def upload_and_detect_clone(
                         "vehicle_brand": vehicle_brand,
                         "vehicle_model": vehicle_model,
                         "vehicle_color": vehicle_color,
+                        "vehicle_type": vehicle_type,
                         "owner_name": owner_name,
                         "offense": "Vehicle Identity Forgery, Plate Alteration, and Cloning Anomaly",
                         "sections": "Section 482 (Use of False Property Mark) & Section 468 (Forgery for Purpose of Cheating) IPC",
@@ -403,7 +416,8 @@ async def search_vehicle_in_cctv(
                         "box": box,
                         "similarity_score": similarity,
                         "is_matched": is_match,
-                        "timestamp": timestamp_str
+                        "timestamp": timestamp_str,
+                        "vehicle_type": veh.get("vehicle_type", "car")
                     })
                 
                 # Annotate the frame if we have detections
@@ -433,6 +447,7 @@ async def search_vehicle_in_cctv(
                             "similarity_score": fd["similarity_score"],
                             "is_matched": fd["is_matched"],
                             "timestamp": fd["timestamp"],
+                            "vehicle_type": fd.get("vehicle_type", "car"),
                             "annotated_frame_path": rel_frame_annotated_path
                         }
                         all_detections.append(det_record)

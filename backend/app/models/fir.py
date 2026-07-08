@@ -10,6 +10,7 @@ class FIRResponse(BaseModel):
     vehicle_brand: str
     vehicle_model: str
     vehicle_color: str
+    vehicle_type: str
     owner_name: str
     offense: str
     sections: str

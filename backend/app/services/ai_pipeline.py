@@ -156,9 +156,9 @@ class AIService:
                 for result in results:
                     boxes = result.boxes
                     for box in boxes:
-                        # Class 2 is car, 3 is motorcycle, 5 is bus, 7 is truck in COCO
-                        cls_id = int(box.cls[0])
-                        if cls_id in [2, 3, 5, 7]:
+                        class_names = {2: "car", 3: "motorcycle", 5: "bus", 7: "truck"}
+                        if cls_id in class_names:
+                            vehicle_type = class_names[cls_id]
                             x1, y1, x2, y2 = map(int, box.xyxy[0])
                             conf = float(box.conf[0])
                             
@@ -265,7 +265,8 @@ class AIService:
                                 "box": [px1_orig, py1_orig, px2_orig, py2_orig], # tight plate coordinates
                                 "confidence": conf,
                                 "crop_path": rel_crop_path,
-                                "crop_img": plate_crop
+                                "crop_img": plate_crop,
+                                "vehicle_type": vehicle_type
                             })
                             box_idx += 1
             except Exception as e:
@@ -349,7 +350,8 @@ class AIService:
                 "box": [px1_orig, py1_orig, px2_orig, py2_orig],
                 "confidence": 0.95,
                 "crop_path": rel_crop_path,
-                "crop_img": plate_crop
+                "crop_img": plate_crop,
+                "vehicle_type": "car"
             })
  
         return detections
@@ -427,7 +429,7 @@ class AIService:
             
         return ocr_text, confidence
 
-    async def validate_with_gemini(self, frame_path: str, ocr_plate: str) -> Dict[str, Any]:
+    async def validate_with_gemini(self, frame_path: str, ocr_plate: str, vehicle_type: str = "car") -> Dict[str, Any]:
         """
         Validates vehicle visual attributes using Gemini Multimodal LLM.
         Sends the extracted frame to Gemini and requests attributes in JSON structure.
@@ -455,6 +457,7 @@ class AIService:
             "color": color,
             "brand": brand,
             "model": model,
+            "vehicle_type": vehicle_type,
             "confidence": 0.95
         }
 
@@ -478,6 +481,7 @@ class AIService:
                 "2. color: The visual color of the vehicle (e.g. Red, Blue, Black, White, Silver).\n"
                 "3. brand: The brand/make of the vehicle (e.g. Maruti, Toyota, Hyundai, Honda, BMW).\n"
                 "4. model: The model of the vehicle (e.g. Swift, Fortuner, Creta, City, 3 Series).\n"
+                f"5. vehicle_type: The type of the vehicle (e.g. car, motorcycle, bus, truck). Default is '{vehicle_type}'.\n"
                 "Return a raw JSON object containing these keys and values. Do not write any explanations or markdown formatting outside the JSON."
             )
             
@@ -499,6 +503,7 @@ class AIService:
                 "color": parsed.get("color", color),
                 "brand": parsed.get("brand", brand),
                 "model": parsed.get("model", model),
+                "vehicle_type": parsed.get("vehicle_type", vehicle_type).lower(),
                 "confidence": 0.98
             }
         except Exception as e:

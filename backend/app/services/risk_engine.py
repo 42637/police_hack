@@ -102,6 +102,18 @@ class RiskEngine:
                     "mismatch": True
                 }
 
+            # Check Vehicle Type Mismatch
+            reg_type = reg_vehicle.get("vehicle_type", "car")
+            det_type = detected_attrs.get("vehicle_type", "car")
+            if reg_type.lower() != det_type.lower():
+                risk_score += 40.0
+                is_clone = True
+                mismatch_details["vehicle_type"] = {
+                    "registered": reg_type,
+                    "detected": det_type,
+                    "mismatch": True
+                }
+
             # Check Registry status flag
             if reg_status in ["Wanted", "Suspended"]:
                 risk_score += 30.0

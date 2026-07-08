@@ -292,6 +292,15 @@ export const Section1: React.FC = () => {
                             <span className="text-cyan-400 font-bold">{veh.number_plate}</span>
                           </div>
 
+                          {/* Vehicle Type */}
+                          <div className="grid grid-cols-3 p-2.5">
+                            <span className="text-gray-500">VEHICLE TYPE</span>
+                            <span className="text-white capitalize">{veh.registry_details?.vehicle_type || 'N/A'}</span>
+                            <span className={(!veh.registry_details || veh.vehicle_type === veh.registry_details.vehicle_type) ? 'text-gray-300 capitalize' : 'text-rose-500 font-black capitalize animate-pulse'}>
+                              {veh.vehicle_type || 'car'}
+                            </span>
+                          </div>
+
                           {/* Brand */}
                           <div className="grid grid-cols-3 p-2.5">
                             <span className="text-gray-500">BRAND</span>

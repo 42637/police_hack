@@ -99,7 +99,7 @@ export const Firs: React.FC = () => {
                     </td>
                     <td className="py-3 text-white font-mono">
                       <span className="font-bold text-cyan-400 mr-2">{fir.registration_number}</span>
-                      <span className="text-[10px] text-gray-500 uppercase">({fir.vehicle_color} {fir.vehicle_brand} {fir.vehicle_model})</span>
+                      <span className="text-[10px] text-gray-500 uppercase">({fir.vehicle_color} {fir.vehicle_brand} {fir.vehicle_model} {fir.vehicle_type || 'car'})</span>
                     </td>
                     <td className="py-3 text-gray-300">{fir.owner_name}</td>
                     <td className="py-3 text-gray-300 flex items-center space-x-1">

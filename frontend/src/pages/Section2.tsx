@@ -238,7 +238,9 @@ export const Section2: React.FC = () => {
                             {det.is_matched ? 'TARGET DETECTED' : `VEHICLE #${det.idx + 1}`}
                           </span>
                           <h4 className="text-white font-bold block font-mono">OCR READ: {det.ocr_text}</h4>
-                          <span className="text-[10px] text-gray-500 block">OCR Conf: {Math.round(det.plate_confidence * 100)}%</span>
+                          <span className="text-[10px] text-gray-500 block">
+                            Type: <span className="text-cyan-400 capitalize">{det.vehicle_type || 'car'}</span> // OCR Conf: {Math.round(det.plate_confidence * 100)}%
+                          </span>
                           {det.timestamp && (
                             <span className="text-[10px] text-cyan-400 block font-bold mt-1 font-mono uppercase tracking-widest">
                               SPOTTED AT: {det.timestamp}

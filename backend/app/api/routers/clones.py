@@ -37,6 +37,7 @@ async def list_cloned_vehicles(
             c["registered_brand"] = reg["vehicle_brand"]
             c["registered_model"] = reg["vehicle_model"]
             c["registered_color"] = reg["vehicle_color"]
+            c["registered_type"] = reg.get("vehicle_type", "car")
             c["registered_status"] = "Wanted" if reg.get("is_blacklisted") else "Active"
 
         # Join detection frame details
@@ -67,6 +68,7 @@ async def list_cloned_vehicles(
             c["detected_brand"] = det_veh["brand"]
             c["detected_model"] = det_veh["model"]
             c["detected_color"] = det_veh["color"]
+            c["detected_type"] = det_veh.get("vehicle_type", "car")
 
         clones.append(c)
         
@@ -104,6 +106,7 @@ async def get_clone_details(
             "brand": reg["vehicle_brand"],
             "model": reg["vehicle_model"],
             "color": reg["vehicle_color"],
+            "vehicle_type": reg.get("vehicle_type", "car"),
             "owner": reg["owner_name"],
             "status": "Wanted" if reg.get("is_blacklisted") else "Active"
         }
@@ -123,6 +126,7 @@ async def get_clone_details(
             "brand": det_veh["brand"],
             "model": det_veh["model"],
             "color": det_veh["color"],
+            "vehicle_type": det_veh.get("vehicle_type", "car"),
             "crop_path": det_veh["crop_path"],
             "plate_confidence": det_veh["plate_confidence"]
         }

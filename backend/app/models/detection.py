@@ -40,6 +40,7 @@ class DetectedVehicleBase(BaseModel):
     color: str
     brand: str
     model: str
+    vehicle_type: str = "car"
     box: List[int] = Field(default_factory=list) # [x1, y1, x2, y2]
     match_score: float = 0.0
     is_flagged_clone: bool = False

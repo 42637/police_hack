@@ -7,6 +7,7 @@ class RegisteredVehicleBase(BaseModel):
     vehicle_brand: str
     vehicle_model: str
     vehicle_color: str
+    vehicle_type: str = "car"
     registration_state: str
     registration_city: str
     owner_name: str

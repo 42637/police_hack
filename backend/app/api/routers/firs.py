@@ -134,7 +134,7 @@ def generate_fir_pdf_bytes(fir: dict) -> bytes:
         [Paragraph("VEHICLE BRAND:", label_style), Paragraph(fir["vehicle_brand"], value_style),
          Paragraph("VEHICLE MODEL:", label_style), Paragraph(fir["vehicle_model"], value_style)],
         [Paragraph("VEHICLE COLOR:", label_style), Paragraph(fir["vehicle_color"], value_style),
-         Paragraph("", label_style), Paragraph("", value_style)]
+         Paragraph("VEHICLE TYPE:", label_style), Paragraph(fir.get("vehicle_type", "car").upper(), value_style)]
     ]
     t3 = Table(vehicle_data, colWidths=[1.8*inch, 1.7*inch, 1.5*inch, 2.0*inch])
     t3.setStyle(TableStyle([
